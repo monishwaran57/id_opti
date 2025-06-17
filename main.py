@@ -1,4 +1,5 @@
-from gpt_dfs import dfs_df as ordered_df
+# from gpt_dfs import dfs_df as ordered_df
+from new_order import new_order_df as ordered_df
 from opti_classes import (Pipe, max_vel,
                           min_vel, min_pipe_rhae, min_village_rhae)
 from typing import Dict
@@ -41,9 +42,22 @@ def create_pidx_and_piop_dict(pipe):
     return pidx_and_piop
 
 
+def recalculate_rhae_for_childs(p_pipe):
+    if p_pipe.index+1 in calculated_dict:
+        child_pipe = calculated_dict[p_pipe.index+1]
+        if p_pipe.is_village_endpoint:
+            raise ValueError("Adhu epdi thimingalam, p_pipe la 'V'")
+        child_pipe.parent_iop = p_pipe.iop
+        child_pipe.rhas = p_pipe.rhae
+        child_pipe.rhae = child_pipe.find_rhae()
+        calculated_dict[child_pipe.index] = child_pipe
+        recalculate_rhae_for_childs(child_pipe)
+    else:
+        pass
 
 
 def need_to_increase_parent_iop(pipe):
+    print("rhae needing pipe:::", pipe.__dict__)
     pidx_and_piop_dict = create_pidx_and_piop_dict(pipe)
 
     iop_indices_dict = {}
@@ -51,10 +65,55 @@ def need_to_increase_parent_iop(pipe):
         iop_indices_dict[iop] = [idx2 for idx2, iop2 in pidx_and_piop_dict.items() if iop == iop2]
     print("..iop_indices_dict", iop_indices_dict)
 
+    least_iop_among_parents = min(iop_indices_dict)
+
+
+    top_parent_index_to_be_increased = min(iop_indices_dict[least_iop_among_parents])
+
+
+    print("... top iop to be increased", top_parent_index_to_be_increased)
+
+
+    p_pipe = calculated_dict[top_parent_index_to_be_increased]
+
+
+    iop_increased_p_pipe = rhae_low_increase_iop(p_pipe)
+
+
+    calculated_dict[iop_increased_p_pipe.index] = iop_increased_p_pipe
+
+
+    recalculate_rhae_for_childs(iop_increased_p_pipe)
+
+    pipe.parent_iop = iop_increased_p_pipe.iop
+    pipe.rhas = calculated_dict[pipe.parent_pipe_index].rhae
+    pipe.rhae = pipe.find_rhae()
+    print("..pipe.rhae", pipe.rhae)
+
+
+    if check_velocity(pipe):
+        if check_rhae(pipe):
+            return pipe
+        else:
+            print("adichaDhu podhum da off panu da")
+            pipe = rhae_low_increase_iop(pipe=pipe)
+            return pipe
+    else:
+        print("ellam maarum ellam maarum")
+        raise ValueError("ennanga velocity pathala")
+
+
+
+
+
+
+
 
 def rhae_low_increase_iop(pipe):
     print("criteria unsatisfied pipe", pipe.__dict__)
+
     current_iop_index = pipe.allowed_iops.index(pipe.iop)
+
     if current_iop_index+1 < len(pipe.allowed_iops):
         increased_iop = pipe.allowed_iops[current_iop_index+1]
         if increased_iop <= pipe.parent_iop:
@@ -72,9 +131,12 @@ def rhae_low_increase_iop(pipe):
                 raise ValueError("Rhae pathalannu velocity increase panna, velocity criteria break aagudhu!!!!")
         else:
             print("pen endra jadhiyilae aayirathil aval oruthi")
+            pipe = need_to_increase_parent_iop(pipe)
+            return pipe
     else:
         print("pon vairam koduthalum, pothathamma seer senathi")
-        need_to_increase_parent_iop(pipe)
+        pipe = need_to_increase_parent_iop(pipe)
+        return pipe
 
 
 calculated_dict:Dict[int, Pipe] = {}
@@ -90,7 +152,7 @@ while i < len(ordered_df):
 
     rhas = 0 if parent_pipe is None else calculated_dict[parent_pipe_index].rhae
 
-    del pipe_from_df['old_iop']
+    # del pipe_from_df['old_iop']
 
     current_pipe = Pipe(**pipe_from_df, rhas=rhas, index=i)
 
@@ -105,5 +167,5 @@ while i < len(ordered_df):
         current_pipe = rhae_low_increase_iop(current_pipe)
         calculated_dict[i] = current_pipe
         i = len(calculated_dict)
-        break
+
 
