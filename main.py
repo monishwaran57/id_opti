@@ -1,5 +1,5 @@
-# from gpt_dfs import dfs_df as ordered_df
-from new_order import new_order_df as ordered_df
+from gpt_dfs import dfs_df as ordered_df
+# from new_order import new_order_df as ordered_df
 from opti_classes import (Pipe, max_vel,
                           min_vel, min_pipe_rhae, min_village_rhae)
 from typing import Dict
@@ -43,10 +43,14 @@ def create_pidx_and_piop_dict(pipe):
 
 
 def recalculate_rhae_for_childs(p_pipe):
+    while p_pipe.is_village_endpoint:
+        if p_pipe.index + 1 in calculated_dict:
+            p_pipe = calculated_dict[p_pipe.index+1]
+        else:
+            return True
     if p_pipe.index+1 in calculated_dict:
         child_pipe = calculated_dict[p_pipe.index+1]
-        if p_pipe.is_village_endpoint:
-            raise ValueError("Adhu epdi thimingalam, p_pipe la 'V'")
+
         child_pipe.parent_iop = p_pipe.iop
         child_pipe.rhas = p_pipe.rhae
         child_pipe.rhae = child_pipe.find_rhae()
@@ -144,6 +148,7 @@ calculated_dict:Dict[int, Pipe] = {}
 i=len(calculated_dict)
 
 while i < len(ordered_df):
+    print("---->", i)
     pipe_from_df = ordered_df.loc[i]
 
     parent_pipe = give_parent_pipe_details(child_start_node=pipe_from_df['start_node'])
@@ -152,7 +157,7 @@ while i < len(ordered_df):
 
     rhas = 0 if parent_pipe is None else calculated_dict[parent_pipe_index].rhae
 
-    # del pipe_from_df['old_iop']
+    del pipe_from_df['old_iop']
 
     current_pipe = Pipe(**pipe_from_df, rhas=rhas, index=i)
 
