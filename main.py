@@ -83,6 +83,9 @@ def need_to_increase_parent_iop(pipe):
 
     iop_increased_p_pipe = rhae_low_increase_iop(p_pipe)
 
+    if iop_increased_p_pipe.index == forget_index:
+        return iop_increased_p_pipe
+
 
     calculated_dict[iop_increased_p_pipe.index] = iop_increased_p_pipe
 
@@ -105,12 +108,6 @@ def need_to_increase_parent_iop(pipe):
     else:
         print("ellam maarum ellam maarum")
         raise ValueError("ennanga velocity pathala")
-
-
-
-
-
-
 
 
 def rhae_low_increase_iop(pipe):
@@ -142,6 +139,11 @@ def rhae_low_increase_iop(pipe):
         pipe = need_to_increase_parent_iop(pipe)
         return pipe
 
+parent_indices_list = ordered_df[~ordered_df['end_node'].str.contains('V')].index.tolist()
+
+forget_index_position = 0
+
+forget_index = parent_indices_list[forget_index_position]
 
 calculated_dict:Dict[int, Pipe] = {}
 
@@ -149,6 +151,8 @@ i=len(calculated_dict)
 
 while i < len(ordered_df):
     print("---->", i)
+    if i==56:
+        print("hi hethe")
     pipe_from_df = ordered_df.loc[i]
 
     parent_pipe = give_parent_pipe_details(child_start_node=pipe_from_df['start_node'])
@@ -170,7 +174,17 @@ while i < len(ordered_df):
         i = len(calculated_dict)
     else:
         current_pipe = rhae_low_increase_iop(current_pipe)
-        calculated_dict[i] = current_pipe
-        i = len(calculated_dict)
+        if current_pipe.index == forget_index:
+            forget_index_position += 1
+            forget_index = parent_indices_list[forget_index_position]
+            child_indices_to_be_forgotten_list = [idx for idx in calculated_dict if idx > current_pipe.index]
+            for idx in child_indices_to_be_forgotten_list:
+                del calculated_dict[idx]
+
+            calculated_dict[current_pipe.index] = current_pipe
+            i = len(calculated_dict)
+        else:
+            calculated_dict[i] = current_pipe
+            i = len(calculated_dict)
 
 
