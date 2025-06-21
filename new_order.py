@@ -126,4 +126,4 @@ new_order_df = new_order_df.reset_index(drop=True)
 
 new_order_df.to_excel("neworder.xlsx")
 
-new_order_df = new_order_df.drop(["old_iop","new_iop","new_velocity","new_fhl","available_residual_head_at_start","residual_head_at_end"], axis=1)
+new_order_df = new_order_df.drop(["new_iop","new_velocity","new_fhl","available_residual_head_at_start","residual_head_at_end"], axis=1)

@@ -1,5 +1,5 @@
-from gpt_dfs import dfs_df as ordered_df
-# from new_order import new_order_df as ordered_df
+# from gpt_dfs import dfs_df as ordered_df
+from new_order import new_order_df as ordered_df
 from opti_classes import (Pipe, max_vel,
                           min_vel, min_pipe_rhae, min_village_rhae)
 from typing import Dict
@@ -61,62 +61,49 @@ def recalculate_rhae_for_childs(p_pipe):
 
 
 def need_to_increase_parent_iop(pipe):
-    print("rhae needing pipe:::", pipe.__dict__)
     pidx_and_piop_dict = create_pidx_and_piop_dict(pipe)
 
     iop_indices_dict = {}
     for idx, iop in pidx_and_piop_dict.items():
         iop_indices_dict[iop] = [idx2 for idx2, iop2 in pidx_and_piop_dict.items() if iop == iop2]
-    print("..iop_indices_dict", iop_indices_dict)
 
-    least_iop_among_parents = min(iop_indices_dict)
-
-
-    top_parent_index_to_be_increased = min(iop_indices_dict[least_iop_among_parents])
-
-
-    print("... top iop to be increased", top_parent_index_to_be_increased)
-
+    if len(iop_indices_dict) != 0:
+        least_iop_among_parents = min(iop_indices_dict)
+        top_parent_index_to_be_increased = min(iop_indices_dict[least_iop_among_parents])
+    else:
+        top_parent_index_to_be_increased = 0
 
     p_pipe = calculated_dict[top_parent_index_to_be_increased]
 
-
     iop_increased_p_pipe = rhae_low_increase_iop(p_pipe)
 
+    # if iop_increased_p_pipe.index == 0 or (iop_increased_p_pipe.index == forget_index and iop_increased_p_pipe.iop == iop_increased_p_pipe.allowed_iops[-1]):
     if iop_increased_p_pipe.index == forget_index:
         return iop_increased_p_pipe
 
-
     calculated_dict[iop_increased_p_pipe.index] = iop_increased_p_pipe
-
 
     recalculate_rhae_for_childs(iop_increased_p_pipe)
 
     pipe.parent_iop = iop_increased_p_pipe.iop
     pipe.rhas = calculated_dict[pipe.parent_pipe_index].rhae
     pipe.rhae = pipe.find_rhae()
-    print("..pipe.rhae", pipe.rhae)
-
 
     if check_velocity(pipe):
         if check_rhae(pipe):
             return pipe
         else:
-            print("adichaDhu podhum da off panu da")
             pipe = rhae_low_increase_iop(pipe=pipe)
             return pipe
     else:
-        print("ellam maarum ellam maarum")
         raise ValueError("ennanga velocity pathala")
 
 
 def rhae_low_increase_iop(pipe):
-    print("criteria unsatisfied pipe", pipe.__dict__)
-
     current_iop_index = pipe.allowed_iops.index(pipe.iop)
-
-    if current_iop_index+1 < len(pipe.allowed_iops):
-        increased_iop = pipe.allowed_iops[current_iop_index+1]
+    increased_iop_index = current_iop_index + 1
+    while increased_iop_index < len(pipe.allowed_iops):
+        increased_iop = pipe.allowed_iops[increased_iop_index]
         if increased_iop <= pipe.parent_iop:
             pipe.iop = increased_iop
             pipe.velocity = pipe.find_velocity()
@@ -126,16 +113,13 @@ def rhae_low_increase_iop(pipe):
                 if check_rhae(pipe):
                     return pipe
                 else:
-                    pipe = rhae_low_increase_iop(pipe)
-                    return pipe
+                    increased_iop_index += 1
             else:
                 raise ValueError("Rhae pathalannu velocity increase panna, velocity criteria break aagudhu!!!!")
         else:
-            print("pen endra jadhiyilae aayirathil aval oruthi")
             pipe = need_to_increase_parent_iop(pipe)
             return pipe
     else:
-        print("pon vairam koduthalum, pothathamma seer senathi")
         pipe = need_to_increase_parent_iop(pipe)
         return pipe
 
@@ -151,8 +135,8 @@ i=len(calculated_dict)
 
 while i < len(ordered_df):
     print("---->", i)
-    if i==56:
-        print("hi hethe")
+    if i==707:
+        print("mugi vara")
     pipe_from_df = ordered_df.loc[i]
 
     parent_pipe = give_parent_pipe_details(child_start_node=pipe_from_df['start_node'])
@@ -188,3 +172,12 @@ while i < len(ordered_df):
             i = len(calculated_dict)
 
 
+for key, value in calculated_dict.items():
+    ordered_df.loc[key, 'new_iop'] = value.iop
+    ordered_df.loc[key, 'new_velocity'] = value.velocity
+    ordered_df.loc[key, 'new_fhl'] = value.fhl
+    ordered_df.loc[key, 'available_residual_head_at_start'] = value.rhas
+    ordered_df.loc[key, 'residual_head_at_end'] = value.rhae
+    ordered_df.loc[key, 'allowed_iops'] = str(value.allowed_iops)
+
+ordered_df.to_excel("opti.xlsx")
