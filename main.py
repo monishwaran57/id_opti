@@ -1,6 +1,6 @@
 # from gpt_dfs import dfs_df as ordered_df
 from new_order import new_order_df as ordered_df
-from opti_classes import (Pipe, max_vel,
+from opti_classes import (Pipe, max_vel, forget_gap,
                           min_vel, min_pipe_rhae, min_village_rhae)
 from typing import Dict
 
@@ -77,8 +77,8 @@ def need_to_increase_parent_iop(pipe):
 
     iop_increased_p_pipe = rhae_low_increase_iop(p_pipe)
 
-    # if iop_increased_p_pipe.index == 0 or (iop_increased_p_pipe.index == forget_index and iop_increased_p_pipe.iop == iop_increased_p_pipe.allowed_iops[-1]):
-    if iop_increased_p_pipe.index == forget_index:
+    child_started_the_loop_index_in = child_pipe_loop_list[0]
+    if (child_started_the_loop_index_in - iop_increased_p_pipe.index) >= forget_gap:
         return iop_increased_p_pipe
 
     calculated_dict[iop_increased_p_pipe.index] = iop_increased_p_pipe
@@ -100,6 +100,8 @@ def need_to_increase_parent_iop(pipe):
 
 
 def rhae_low_increase_iop(pipe):
+    if pipe.index not in child_pipe_loop_list:
+        child_pipe_loop_list.append(pipe.index)
     current_iop_index = pipe.allowed_iops.index(pipe.iop)
     increased_iop_index = current_iop_index + 1
     while increased_iop_index < len(pipe.allowed_iops):
@@ -125,9 +127,7 @@ def rhae_low_increase_iop(pipe):
 
 parent_indices_list = ordered_df[~ordered_df['end_node'].str.contains('V')].index.tolist()
 
-forget_index_position = 0
-
-forget_index = parent_indices_list[forget_index_position]
+child_pipe_loop_list = []
 
 calculated_dict:Dict[int, Pipe] = {}
 
@@ -135,7 +135,9 @@ i=len(calculated_dict)
 
 while i < len(ordered_df):
     print("---->", i)
-    if i==707:
+    if i == 40:
+        print("---------------------------->40")
+    if i==46:
         print("mugi vara")
     pipe_from_df = ordered_df.loc[i]
 
@@ -158,18 +160,19 @@ while i < len(ordered_df):
         i = len(calculated_dict)
     else:
         current_pipe = rhae_low_increase_iop(current_pipe)
-        if current_pipe.index == forget_index:
-            forget_index_position += 1
-            forget_index = parent_indices_list[forget_index_position]
+        child_started_the_loop_index = child_pipe_loop_list[0]
+        if (child_started_the_loop_index - current_pipe.index) >= forget_gap:
             child_indices_to_be_forgotten_list = [idx for idx in calculated_dict if idx > current_pipe.index]
             for idx in child_indices_to_be_forgotten_list:
                 del calculated_dict[idx]
 
             calculated_dict[current_pipe.index] = current_pipe
             i = len(calculated_dict)
+            child_pipe_loop_list = []
         else:
             calculated_dict[i] = current_pipe
             i = len(calculated_dict)
+            child_pipe_loop_list = []
 
 
 for key, value in calculated_dict.items():
