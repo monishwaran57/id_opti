@@ -1,9 +1,14 @@
 # from gpt_dfs import dfs_df as ordered_df
-from new_order import new_order_df as ordered_df
+# from new_order import new_order_df as ordered_df
+# from new_order import deepest_branch_df as ordered_df, deepest_branch_indices
 from opti_classes import (Pipe, max_vel, forget_gap,
                           min_vel, min_pipe_rhae, min_village_rhae)
 from typing import Dict
+import pandas as pd
 
+ordered_df = pd.read_excel("deep_branch.xlsx", index_col=0)
+ordered_df = ordered_df.drop(["new_iop","new_velocity","new_fhl","available_residual_head_at_start","residual_head_at_end"], axis=1)
+deepest_branch_indices = ordered_df.index.to_list()
 
 def give_parent_pipe_details(child_start_node):
     matches = ordered_df.loc[ordered_df['end_node'] == child_start_node]
@@ -11,7 +16,7 @@ def give_parent_pipe_details(child_start_node):
     if not matches.empty:
         parent_pipe_match = matches.iloc[0].to_dict()
 
-        parent_pipe_match["index"] = matches.index[0]
+        parent_pipe_match["index"] = int(matches.index[0])
 
         return parent_pipe_match
     else:
@@ -48,8 +53,10 @@ def recalculate_rhae_for_childs(p_pipe):
             p_pipe = calculated_dict[p_pipe.index+1]
         else:
             return True
-    if p_pipe.index+1 in calculated_dict:
-        child_pipe = calculated_dict[p_pipe.index+1]
+    parent_index_in_deepest_branch_list = deepest_branch_indices.index(p_pipe.index)
+    child_index = deepest_branch_indices[parent_index_in_deepest_branch_list+1]
+    if child_index in calculated_dict:
+        child_pipe = calculated_dict[child_index]
 
         child_pipe.parent_iop = p_pipe.iop
         child_pipe.rhas = p_pipe.rhae
@@ -133,13 +140,14 @@ calculated_dict:Dict[int, Pipe] = {}
 
 i=len(calculated_dict)
 
+leng_of_order_df = len(ordered_df)
+
 while i < len(ordered_df):
     print("---->", i)
-    if i == 40:
-        print("---------------------------->40")
-    if i==46:
-        print("mugi vara")
-    pipe_from_df = ordered_df.loc[i]
+    if i == 52:
+        print("asterdam")
+
+    pipe_from_df = ordered_df.loc[deepest_branch_indices[i]]
 
     parent_pipe = give_parent_pipe_details(child_start_node=pipe_from_df['start_node'])
 
@@ -149,14 +157,14 @@ while i < len(ordered_df):
 
     del pipe_from_df['old_iop']
 
-    current_pipe = Pipe(**pipe_from_df, rhas=rhas, index=i)
+    current_pipe = Pipe(**pipe_from_df, rhas=rhas, index=deepest_branch_indices[i])
 
     current_pipe.parent_iop = current_pipe.allowed_iops[-1] if parent_pipe is None else calculated_dict[parent_pipe_index].iop
 
     current_pipe.parent_pipe_index = None if parent_pipe is None else parent_pipe_index
 
     if check_rhae(current_pipe):
-        calculated_dict[i] = current_pipe
+        calculated_dict[deepest_branch_indices[i]] = current_pipe
         i = len(calculated_dict)
     else:
         current_pipe = rhae_low_increase_iop(current_pipe)
@@ -170,7 +178,7 @@ while i < len(ordered_df):
             i = len(calculated_dict)
             child_pipe_loop_list = []
         else:
-            calculated_dict[i] = current_pipe
+            calculated_dict[deepest_branch_indices[i]] = current_pipe
             i = len(calculated_dict)
             child_pipe_loop_list = []
 
@@ -183,4 +191,4 @@ for key, value in calculated_dict.items():
     ordered_df.loc[key, 'residual_head_at_end'] = value.rhae
     ordered_df.loc[key, 'allowed_iops'] = str(value.allowed_iops)
 
-ordered_df.to_excel("opti.xlsx")
+ordered_df.to_excel("deep_opti.xlsx")

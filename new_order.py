@@ -27,8 +27,7 @@ calci_dict = {}
 
 for i, row in ordered_df.iterrows():
     print(".........", i)
-    if i == 1237:
-        print("...")
+
     parent_pipe_index_list = ordered_df.index[ordered_df['end_node'] == row['start_node']].to_list()
 
     parent_pipe_index = None if len(parent_pipe_index_list) == 0 else parent_pipe_index_list[0]
@@ -44,7 +43,7 @@ for i, row in ordered_df.iterrows():
     velocity = find_velocity_by_formula(discharge=row['discharge'], id_of_pipe=closest_iop)
 
     if closest_iop_index != 0:
-        while velocity < 0.6 or velocity > 3:
+        while velocity > 3:
             closest_iop = IOP[closest_iop_index + 1]
             velocity = find_velocity_by_formula(discharge=row['discharge'], id_of_pipe=closest_iop)
             if 0.6 <= velocity <= 3:
@@ -103,14 +102,20 @@ for ridx, pipe in asce_ordered_df.iterrows():
 
         asce_calci_dict[pipe['end_node']] = [ridx]
 
-
         add_parent_pipe_index_to_the_list(pipe, end_node=pipe['end_node'])
 
 
 
 
-print(asce_calci_dict)
+print("enga", asce_calci_dict.keys())
+deepest_child_node = list(asce_calci_dict.keys())[0]
+deepest_branch_indices = asce_calci_dict[deepest_child_node]
+print("....deepest branch indices\n", deepest_branch_indices)
 
+deepest_branch_indices.sort()
+deepest_branch_df = asce_ordered_df.loc[deepest_branch_indices]
+# deepest_branch_df = deepest_branch_df.reset_index(drop=True)
+deepest_branch_df.to_excel("deep_branch.xlsx")
 print("now i'm going to reorder the dict")
 for end_node, index_list in asce_calci_dict.items():
     index_list.sort()
@@ -118,7 +123,7 @@ for end_node, index_list in asce_calci_dict.items():
         if idx not in ordered_list:
             ordered_list.append(idx)
 
-print("\n", ordered_list)
+print("\n---->", ordered_list)
 
 new_order_df = asce_ordered_df.loc[ordered_list]
 
