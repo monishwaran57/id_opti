@@ -1,6 +1,6 @@
 from gpt_dfs import dfs_df as ordered_df
-from formulas import IOP, find_closest_iop_index_by_formula, find_velocity_by_formula, find_friction_head_loss_by_formula, find_residual_head_at_end_by_formula
-
+from opti_classes import Pipe
+from typing import Dict
 
 def give_parent_pipe_details(child_start_node):
     matches = ordered_df.loc[ordered_df['end_node'] == child_start_node]
@@ -23,7 +23,7 @@ def add_parent_pipe_index_to_the_list(child_pipe, end_node):
 
         add_parent_pipe_index_to_the_list(parent_pipe, end_node)
 
-calci_dict = {}
+calci_dict:Dict[int, Pipe] = {}
 
 for i, row in ordered_df.iterrows():
     print(".........", i)
@@ -32,64 +32,33 @@ for i, row in ordered_df.iterrows():
 
     parent_pipe_index = None if len(parent_pipe_index_list) == 0 else parent_pipe_index_list[0]
 
-    PARENT_IOP = None if parent_pipe_index is None else calci_dict[parent_pipe_index]['iop']
+    PARENT_IOP = None if parent_pipe_index is None else calci_dict[parent_pipe_index].iop
 
-    RHAS = 0 if parent_pipe_index is None else calci_dict[parent_pipe_index]['rhae']
+    RHAS = 0 if parent_pipe_index is None else calci_dict[parent_pipe_index].rhae
 
-    closest_iop_index = find_closest_iop_index_by_formula(row['discharge'])
+    del row['old_iop']
 
-    closest_iop = IOP[closest_iop_index]
+    current_pipe = Pipe(**row, rhas=RHAS, index=i)
 
-    velocity = find_velocity_by_formula(discharge=row['discharge'], id_of_pipe=closest_iop)
+    current_pipe.parent_iop = current_pipe.allowed_iops[-1] if PARENT_IOP is None else calci_dict[
+        parent_pipe_index].iop
 
-    if closest_iop_index != 0:
-        while velocity > 3:
-            closest_iop = IOP[closest_iop_index + 1]
-            velocity = find_velocity_by_formula(discharge=row['discharge'], id_of_pipe=closest_iop)
-            if 0.6 <= velocity <= 3:
-                break
-            else:
-                closest_iop_index += 1
-        # raise ValueError("velocity goes below 0.6")
-
-    fhl = find_friction_head_loss_by_formula(length=row['length'],
-                                             discharge=row['discharge'],
-                                             cr_value=1,
-                                             iop=closest_iop)
-
-    diff_in_g_level = row['ground_level_start'] - row['ground_level_end']
-
-    rhae = find_residual_head_at_end_by_formula(diff_in_g_level=diff_in_g_level, rhas=RHAS,
-                                                fhl=fhl)
+    current_pipe.parent_pipe_index = None if parent_pipe_index is None else parent_pipe_index
 
 
-    calci_dict[i] = {
-        "start_node": row['start_node'],
-        "end_node": row['end_node'],
-        "length": row['length'],
-        "discharge": row['discharge'],
-        "ground_level_start": row["ground_level_start"],
-        "ground_level_end": row["ground_level_end"],
-        "parent_iop": PARENT_IOP,
-        "iop": closest_iop,
-        "iop_index": IOP.index(closest_iop),
-        "fhl": fhl,
-        "velocity": velocity,
-        "rhas": RHAS,
-        "rhae": rhae
-    }
+    calci_dict[i] = current_pipe
 
 
 for key, value in calci_dict.items():
-    ordered_df.loc[key, 'new_iop'] = value['iop']
-    ordered_df.loc[key, 'new_velocity'] = value['velocity']
-    ordered_df.loc[key, 'new_fhl'] = value['fhl']
-    ordered_df.loc[key, 'available_residual_head_at_start'] = round(value['rhas'], 2)
-    ordered_df.loc[key, 'residual_head_at_end'] = round(value['rhae'], 2)
+    ordered_df.loc[key, 'new_iop'] = value.iop
+    ordered_df.loc[key, 'new_velocity'] = value.velocity
+    ordered_df.loc[key, 'new_fhl'] = value.fhl
+    ordered_df.loc[key, 'available_residual_head_at_start'] = value.rhas
+    ordered_df.loc[key, 'residual_head_at_end'] = value.rhae
 
 asce_ordered_df = ordered_df.sort_values(by="residual_head_at_end")
 
-asce_ordered_df.to_excel('ascendingly_ordered_by_-ve_rhae.xlsx')
+# asce_ordered_df.to_excel('ascendingly_ordered_by_-ve_rhae.xlsx')
 
 asce_calci_dict = {}
 
@@ -107,15 +76,15 @@ for ridx, pipe in asce_ordered_df.iterrows():
 
 
 
-print("enga", asce_calci_dict.keys())
-deepest_child_node = list(asce_calci_dict.keys())[0]
-deepest_branch_indices = asce_calci_dict[deepest_child_node]
-print("....deepest branch indices\n", deepest_branch_indices)
-
-deepest_branch_indices.sort()
-deepest_branch_df = asce_ordered_df.loc[deepest_branch_indices]
-# deepest_branch_df = deepest_branch_df.reset_index(drop=True)
-deepest_branch_df.to_excel("deep_branch.xlsx")
+# print("enga", asce_calci_dict.keys())
+# deepest_child_node = list(asce_calci_dict.keys())[0]
+# deepest_branch_indices = asce_calci_dict[deepest_child_node]
+# print("....deepest branch indices\n", deepest_branch_indices)
+#
+# deepest_branch_indices.sort()
+# deepest_branch_df = asce_ordered_df.loc[deepest_branch_indices]
+# # deepest_branch_df = deepest_branch_df.reset_index(drop=True)
+# deepest_branch_df.to_excel("deep_branch.xlsx")
 print("now i'm going to reorder the dict")
 for end_node, index_list in asce_calci_dict.items():
     index_list.sort()
