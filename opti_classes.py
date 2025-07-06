@@ -66,3 +66,7 @@ class Pipe:
             if max_vel >= vel >= min_vel:
                 allowed_iops.append(iop)
         return allowed_iops
+
+
+
+# rhas formula : =IF(COUNTIF(C$2:C2, B2)=0, 0, INDEX(M$2:M2, MATCH(B2, C$2:C2, 0)))
