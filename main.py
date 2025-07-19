@@ -1,5 +1,6 @@
 # from gpt_dfs import dfs_df as ordered_df
-from new_order import new_order_df as ordered_df
+# from new_order import new_order_df as ordered_df
+from ea_order import ea_order_df as ordered_df
 from opti_classes import (Pipe, max_vel, forget_gap,
                           min_vel, min_pipe_rhae, min_village_rhae)
 from typing import Dict
