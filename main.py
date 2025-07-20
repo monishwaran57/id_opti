@@ -44,6 +44,17 @@ def create_pidx_and_piop_dict(pipe):
         pp_index = p_pipe.parent_pipe_index
     return pidx_and_piop
 
+def create_current_max_iop_dict_of_parents(pipe):
+    current_max_iop_dict_of_parents = {}
+    pp_index = pipe.parent_pipe_index
+    while pp_index is not None:
+        p_pipe = calculated_dict[pp_index]
+        current_max_iop_dict_of_parents[pp_index] = {
+            "current_iop": p_pipe.iop,
+            "max_iop": p_pipe.allowed_iops[-1]}
+        pp_index = p_pipe.parent_pipe_index
+    return current_max_iop_dict_of_parents
+
 def get_child_pipes(parent_end_node):
     # Find all pipes where start_node matches parent's end_node
     child_pipes = ordered_df[ordered_df['start_node'] == parent_end_node]
@@ -106,6 +117,17 @@ def need_to_increase_parent_iop(pipe):
 
 
 def rhae_low_increase_iop(pipe):
+    if pipe.index == len(calculated_dict):
+        parrent_current_max_iop = create_current_max_iop_dict_of_parents(pipe)
+        is_every_parent_at_max_iop = True
+        for pp_index, current_max_iop_dict in parrent_current_max_iop.items():
+            if current_max_iop_dict["current_iop"] != current_max_iop_dict["max_iop"]:
+                is_every_parent_at_max_iop = False
+                break
+        if is_every_parent_at_max_iop:
+            return pipe
+
+
     if pipe.index not in child_pipe_loop_list:
         child_pipe_loop_list.append(pipe.index)
     current_iop_index = pipe.allowed_iops.index(pipe.iop)
