@@ -2,11 +2,10 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-min_vel = float(os.environ.get("MIN_VEL"))
-max_vel = float(os.environ.get("MAX_VEL"))
-min_pipe_rhae = int(os.environ.get("RHAE"))
-min_village_rhae = int(os.environ.get("V_RHAE"))
-forget_gap = int(os.environ.get("FORGET_GAP"))
+# min_vel = float(os.environ.get("MIN_VEL"))
+# max_vel = float(os.environ.get("MAX_VEL"))
+# min_pipe_rhae = int(os.environ.get("RHAE"))
+# min_village_rhae = int(os.environ.get("V_RHAE"))
 
 IOP = [96.8, 111.6, 125, 142.8, 160.8, 178.6, 201, 223.4, 250.4, 314.8, 366, 416.4, 466.8, 518, 619.6, 700, 800, 900,
        1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400, 2500]
@@ -25,8 +24,13 @@ def find_closest_iop_index_by_formula(discharge, velocity):
 
 class Pipe:
     def __init__(self,index, start_node, end_node, length, discharge,
-                 ground_level_start, ground_level_end, rhas,
-                 parent_iop=IOP[-1], parent_pipe_index=None):
+                 ground_level_start, ground_level_end, rhas, min_vel=0.6, max_vel=3,
+                 iop_list=None, parent_pipe_index=None):
+        if iop_list is None:
+            iop_list = IOP
+        self.iop_list = iop_list
+        self.min_vel = min_vel
+        self.max_vel = max_vel
         self.index = index
         self.start_node = start_node
         self.end_node = end_node
@@ -37,13 +41,14 @@ class Pipe:
         self.is_village_endpoint = "V" in self.end_node
         self.allowed_iops = self.find_allowed_iops()
         self.iop = self.allowed_iops[0]
-        self.parent_iop = parent_iop
+        self.parent_iop = self.iop_list[-1]
         self.parent_pipe_index = parent_pipe_index
         self.velocity = self.find_velocity()
         self.rhas = rhas
         self.diff_in_g_level = self.ground_level_start - self.ground_level_end
         self.fhl = self.find_fhl()
         self.rhae = self.find_rhae()
+
 
 
 
@@ -61,9 +66,9 @@ class Pipe:
 
     def find_allowed_iops(self):
         allowed_iops = []
-        for iop in IOP:
+        for iop in self.iop_list:
             vel = find_velocity_by_formula(discharge=self.discharge, id_of_pipe=iop)
-            if max_vel >= vel >= min_vel:
+            if self.max_vel >= vel >= self.min_vel:
                 allowed_iops.append(iop)
         return allowed_iops
 
