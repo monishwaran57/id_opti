@@ -153,7 +153,7 @@ def rhae_low_increase_iop(pipe):
         pipe = need_to_increase_parent_iop(pipe)
         return pipe
 
-parent_indices_list = ordered_df[~ordered_df['end_node'].str.contains('V')].index.tolist()
+# parent_indices_list = ordered_df[~ordered_df['end_node'].str.contains('V')].index.tolist()
 
 child_pipe_loop_list = []
 
@@ -215,15 +215,15 @@ for key, value in calculated_dict.items():
 ordered_df.to_excel("opti.xlsx")
 
 
-with pd.ExcelWriter('optiformulas.xlsx', engine='xlsxwriter') as writer:
-    ordered_df.to_excel(writer, sheet_name='Sheet1')
-
-    # Get workbook and worksheet objects
-    workbook = writer.book
-    worksheet = writer.sheets['Sheet1']
-
-    # Add formulas
-    worksheet.write_formula('J2', '=ROUNDDOWN(D2 * (4 / (PI() * (I2 / 1000) ^ 2)), 2)')
-    worksheet.write_formula('K2', '=ROUNDDOWN(((E2 * (D2 / 1) ^1.81) / (994.62 * (I2 / 1000) ^ 4.81)) * 1.1, 2)')
-    worksheet.write_formula('L2', '=IF(COUNTIF(C$2:C2, B2)=0, 0, INDEX(M$2:M2, MATCH(B2, C$2:C2, 0)))')
-    worksheet.write_formula('M2', '=ROUNDDOWN((F2-G2 + L2) - K2, 2)')
+# with pd.ExcelWriter('optiformulas.xlsx', engine='xlsxwriter') as writer:
+#     ordered_df.to_excel(writer, sheet_name='Sheet1')
+#
+#     # Get workbook and worksheet objects
+#     workbook = writer.book
+#     worksheet = writer.sheets['Sheet1']
+#
+#     # Add formulas
+#     worksheet.write_formula('J2', '=ROUNDDOWN(D2 * (4 / (PI() * (I2 / 1000) ^ 2)), 2)')
+#     worksheet.write_formula('K2', '=ROUNDDOWN(((E2 * (D2 / 1) ^1.81) / (994.62 * (I2 / 1000) ^ 4.81)) * 1.1, 2)')
+#     worksheet.write_formula('L2', '=IF(COUNTIF(C$2:C2, B2)=0, 0, INDEX(M$2:M2, MATCH(B2, C$2:C2, 0)))')
+#     worksheet.write_formula('M2', '=ROUNDDOWN((F2-G2 + L2) - K2, 2)')
