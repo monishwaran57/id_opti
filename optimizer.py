@@ -208,6 +208,8 @@ async  def optimize_pipe_ids(ordered_df, min_vel, max_vel, min_pipe_rhae, min_vi
 
     ordered_df.to_excel("opti.xlsx")
 
+    return ordered_df
+
 # import asyncio
 # asyncio.run(optimize_pipe_ids(ea_ordered_df))
 # with pd.ExcelWriter('optiformulas.xlsx', engine='xlsxwriter') as writer:

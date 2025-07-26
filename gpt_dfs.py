@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Load the Excel file
-input_df = pd.read_excel('dc2.xlsx', sheet_name="Sheet1")
+# input_df = pd.read_excel('dc2.xlsx', sheet_name="Sheet1")
 
 
 # Function for DFS traversal
