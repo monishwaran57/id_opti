@@ -1,7 +1,7 @@
 import io
 import uvicorn
 from gpt_dfs import create_dfs_ordered_df
-from ea_order import order_df_with_elevation_difference
+from app.ea_order import order_df_with_elevation_difference
 from optimizer import optimize_pipe_ids
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile
@@ -69,7 +69,7 @@ async def start_optimization(iop_list: str = None, min_vel:float=0.6, max_vel:fl
 
 handler = Mangum(app)
 if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True)
+    uvicorn.run("app.main:app", reload=True)
 
 # import asyncio
 # asyncio.run(start_optimization(

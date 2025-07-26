@@ -3,10 +3,8 @@
 # from ea_order import ea_order_df as ea_ordered_df
 # from opti_classes import (Pipe, max_vel, forget_gap,
 #                           min_vel, min_pipe_rhae, min_village_rhae)
-from opti_classes import (Pipe)
+from app.opti_classes import (Pipe)
 from typing import Dict
-import pandas as pd
-
 
 
 def give_parent_pipe_details(child_start_node, ordered_df):
@@ -206,7 +204,7 @@ async  def optimize_pipe_ids(ordered_df, min_vel, max_vel, min_pipe_rhae, min_vi
         ordered_df.loc[key, 'residual_head_at_end'] = value.rhae
         ordered_df.loc[key, 'allowed_iops'] = str(value.allowed_iops)
 
-    ordered_df.to_excel("opti.xlsx")
+    # ordered_df.to_excel("opti.xlsx")
 
     return ordered_df
 

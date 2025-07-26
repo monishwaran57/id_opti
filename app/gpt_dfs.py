@@ -48,7 +48,7 @@ async def create_dfs_ordered_df(df):
     dfs_df = df.loc[sorted_indices].reset_index(drop=True)
 
     # Save to a new Excel file
-    dfs_df.to_excel('sorted_dfs.xlsx', index=False)
+    # dfs_df.to_excel('sorted_dfs.xlsx', index=False)
 
     print("Sorting complete. Output saved to 'sorted_output.xlsx'.")
 
