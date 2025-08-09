@@ -5,6 +5,7 @@
 #                           min_vel, min_pipe_rhae, min_village_rhae)
 from app.opti_classes import (Pipe)
 from typing import Dict
+from app.log_websocket import websocket_manager
 
 
 def give_parent_pipe_details(child_start_node, ordered_df):
@@ -165,10 +166,14 @@ async  def optimize_pipe_ids(ordered_df, min_vel, max_vel, min_pipe_rhae, min_vi
 
     leng_of_order_df = len(ordered_df)
 
+    log_message = f"Total No.of pipes: {leng_of_order_df-1}"
+    await websocket_manager.broadcast(message=log_message)
+
     while i < len(ordered_df):
         print("---->", i)
-        if i == 52:
-            print("asterdam")
+
+        log_message = f"Currently Optimizing: {i}"
+        await websocket_manager.broadcast(message=log_message)
 
         pipe_from_df = ordered_df.loc[i]
 

@@ -1,4 +1,4 @@
-
+from app.log_websocket import websocket_manager
 
 def give_parent_pipe(child_start_node, df_sorted):
     matches = df_sorted.loc[df_sorted['end_node'] == child_start_node]
@@ -18,6 +18,8 @@ async def order_df_with_elevation_difference(dfs_df):
     rgrls = dfs_df['ground_level_start'].iat[0]
     print(f".............rgrls{int(rgrls)}", type(int(rgrls)))
 
+    log_message = f"Reservoir Ground Level Start: {rgrls}"
+    await websocket_manager.broadcast(message=log_message)
 
     dfs_df['elevation_difference'] = rgrls - dfs_df['ground_level_end'].where(
         dfs_df['end_node'].str.contains("V", regex=False),
@@ -31,6 +33,9 @@ async def order_df_with_elevation_difference(dfs_df):
     child_node_parent_list_dict = {}
     for i, pipe_row in df_sorted.iterrows():
         print("..........i--EAEAEAEA--->", i)
+
+        log_message = f"Pipe number inside Elevation difference loop: {i}"
+        await websocket_manager.broadcast(message=log_message)
 
         parent_pipe_dict = give_parent_pipe(pipe_row['start_node'], df_sorted)
 
