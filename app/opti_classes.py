@@ -70,6 +70,8 @@ class Pipe:
             vel = find_velocity_by_formula(discharge=self.discharge, id_of_pipe=iop)
             if self.max_vel >= vel >= self.min_vel:
                 allowed_iops.append(iop)
+        if not allowed_iops:
+            allowed_iops = self.iop_list
         return allowed_iops
 
 

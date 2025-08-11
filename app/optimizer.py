@@ -171,7 +171,8 @@ async  def optimize_pipe_ids(ordered_df, min_vel, max_vel, min_pipe_rhae, min_vi
 
     while i < len(ordered_df):
         print("---->", i)
-
+        if i==2169:
+            print(".....")
         log_message = f"Currently Optimizing: {i}"
         await websocket_manager.broadcast(message=log_message)
 
@@ -183,7 +184,10 @@ async  def optimize_pipe_ids(ordered_df, min_vel, max_vel, min_pipe_rhae, min_vi
 
         rhas = 0 if parent_pipe is None else calculated_dict[parent_pipe_index].rhae
 
-        del pipe_from_df['old_iop']
+        # del pipe_from_df['old_iop']
+
+        if 'old_iop' in pipe_from_df.index:
+            del pipe_from_df['old_iop']
 
         current_pipe = Pipe(**pipe_from_df, rhas=rhas, index=i, min_vel=min_vel, max_vel=max_vel, iop_list=iop_list)
 
